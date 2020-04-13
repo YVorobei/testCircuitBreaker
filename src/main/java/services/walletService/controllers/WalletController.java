@@ -26,6 +26,8 @@ public class WalletController {
     @GetMapping("/badgateway")
     public ResponseEntity testErrorStatus() {
 
+        //log.info("test log");
+        System.out.println("sss");
         return new ResponseEntity(HttpStatus.BAD_GATEWAY);
     }
 
