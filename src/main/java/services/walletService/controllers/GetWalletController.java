@@ -3,11 +3,13 @@ package services.walletService.controllers;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.*;
+import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.http.converter.StringHttpMessageConverter;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestTemplate;
 
-import java.nio.charset.Charset;
+import java.util.ArrayList;
+import java.util.List;
 
 @RestController
 @RequestMapping("/wallet")
@@ -25,31 +27,28 @@ public class GetWalletController {
     }
 
     @PostMapping("/updateWallet")
-    public String getUpdateWalletRequest(@RequestParam(value = "appToken") String appToken,
+    public String updateWalletRequest(@RequestParam(value = "appToken") String appToken,
                                                        @RequestHeader HttpHeaders requestHeaders,
                                                        @RequestBody String requestBody){
-        return getUpdateWalletResponse(appToken, requestHeaders, requestBody);
+        return updateWalletResponse(appToken, requestHeaders, requestBody);
     }
 
-    public String getUpdateWalletResponse(String appToken, HttpHeaders requestHeaders, String requestBody) {
+    public String updateWalletResponse(String appToken, HttpHeaders requestHeaders, String requestBody) {
         String updateWalletUrl = "http://wallet-service-01-test.dublin.local:3332/wallet/updateWallet?appToken={appToken}";
         HttpEntity<String> entity = new HttpEntity<String>(requestBody, requestHeaders);
         RestTemplate restTemplate = new RestTemplate();
-        restTemplate.getMessageConverters().add(0, new StringHttpMessageConverter(Charset.forName("UTF-8")));
-        ResponseEntity<String> response = restTemplate.exchange(updateWalletUrl, HttpMethod.POST, entity, String.class, appToken);
-        if (response.getStatusCode() == HttpStatus.OK) {
-            logger.info("Request Successful.");
-            logger.info(response.getBody());
+        List<HttpMessageConverter<?>> converters = new ArrayList<>();
+        StringHttpMessageConverter stringConverter = new StringHttpMessageConverter();
 
-        } else {
-            logger.info("Request Failed");
-            logger.info(response.getBody());
-        }
-        logger.info(response.getHeaders().toString());
+        stringConverter.setWriteAcceptCharset(false);
+        converters.add(stringConverter);
+        restTemplate.setMessageConverters(converters);
+
+        ResponseEntity<String> response = restTemplate.exchange(updateWalletUrl, HttpMethod.POST, entity, String.class, appToken);
+        logger.info(updateWalletUrl);
         logger.info(response.getStatusCode().toString());
-        logger.info("StatusCodeValue: " + response.getStatusCodeValue());
-        logger.info(response.getBody());
-        logger.info(response.getClass().toString());
+        logger.info("Request body: " + requestBody);
+        logger.info("Response body: "+ response.getBody());
         return response.getBody();
     }
 
