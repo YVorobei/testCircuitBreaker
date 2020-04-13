@@ -24,7 +24,7 @@ public class GetWalletController {
     @PostMapping("/updateWallet")
     public String getUpdateWalletRequest(@RequestParam(value = "appToken") String appToken,
                                                        @RequestHeader HttpHeaders requestHeaders,
-                                                       @RequestBody String requestBody) throws InterruptedException {
+                                                       @RequestBody String requestBody){
         return getUpdateWalletResponse(appToken, requestHeaders, requestBody);
     }
 
