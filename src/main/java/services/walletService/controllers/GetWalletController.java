@@ -24,11 +24,10 @@ public class GetWalletController {
     @PostMapping("/updateWallet")
     public String getUpdateWalletRequest(@RequestParam(value = "appToken") String appToken,
                                                        @RequestHeader HttpHeaders requestHeaders,
-                                                       @RequestBody String requestBody) {
+                                                       @RequestBody String requestBody) throws InterruptedException {
         return getUpdateWalletResponse(appToken, requestHeaders, requestBody);
     }
 
-    @ResponseBody
     public String getUpdateWalletResponse(String appToken, HttpHeaders requestHeaders, String requestBody) {
         String updateWalletUrl = "http://wallet-service-01-test.dublin.local:3332/wallet/updateWallet?appToken={appToken}";
         HttpEntity<String> entity = new HttpEntity<String>(requestBody, requestHeaders);
