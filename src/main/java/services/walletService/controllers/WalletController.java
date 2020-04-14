@@ -26,8 +26,8 @@ public class WalletController {
     public String setResponseCodeWithTimeout(@RequestParam(value = "responseCode") int responseCode, @RequestParam(value = "timeout") int timeout){
         httpStatusResponse = new HttpStatusMapping().getHttpStatus(responseCode);
         responseTimeout = timeout;
-        logger.info("set httpStatusResponse: " + httpStatusResponse + "with timeout: " + timeout);
-        return "WalletResponseCode " + responseCode;
+        String infoLog = "Set httpStatusResponse: " + httpStatusResponse + "; with timeout: " + timeout;
+        return infoLog;
     }
 
     @PostMapping("/updateWallet")
