@@ -25,16 +25,23 @@ public class WalletController {
     private StringHttpMessageConverter stringConverter = new StringHttpMessageConverter();
     private String updateWalletUrl = "http://wallet-service-01-test.dublin.local:3332/wallet/updateWallet?appToken={appToken}";
     private int responseTimeout;
-    private int counter;
+    private int errorCounter;
 
     @PostMapping("/setResponseCodeWithTimeout")
-    public String setResponseCodeWithTimeout(@RequestParam(value = "responseCode") int responseCode, @RequestParam(value = "timeout") int timeout){
+    public String setResponseCodeWithTimeout(@RequestParam(value = "responseCode") int responseCode,
+                                             @RequestParam(value = "timeout") int timeout,
+                                             @RequestParam(value = "resetErrorCounter") boolean resetErrorCounter){
         httpStatusResponse = new HttpStatusMapping().getHttpStatus(responseCode);
         responseTimeout = timeout;
-        counter = 0;
+        errorCounter = (resetErrorCounter) ? 0 : errorCounter;
         String logInfo = "Set httpStatusResponse: " + httpStatusResponse + "; with timeout: " + timeout;
         logger.info(logInfo);
         return logInfo;
+    }
+
+    @GetMapping("/getCurrentErrorCounter")
+    public String getCurrentErrorCounter(){
+        return String.valueOf(errorCounter);
     }
 
     @PostMapping("/updateWallet")
@@ -46,8 +53,8 @@ public class WalletController {
 
     private ResponseEntity<String> updateWalletResponse(String appToken, HttpHeaders requestHeaders, String requestBody) throws InterruptedException {
          if(!httpStatusResponse.is2xxSuccessful()){
-            counter++;
-            logger.info("Counter for error request: "+ counter);
+            errorCounter++;
+            logger.info("Counter for error request: "+ errorCounter);
             return new ResponseEntity(httpStatusResponse);
         }
         HttpEntity<String> entity = new HttpEntity<String>(requestBody, requestHeaders);
