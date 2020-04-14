@@ -1,56 +1,62 @@
 package services.walletService.controllers;
 
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.http.*;
+import org.springframework.http.converter.HttpMessageConverter;
+import org.springframework.http.converter.StringHttpMessageConverter;
 import org.springframework.web.bind.annotation.*;
-import services.walletService.BaseResponse;
-import services.walletService.PaymentRequest;
+import org.springframework.web.client.RestTemplate;
+import services.helper.HttpStatusMapping;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import static org.springframework.http.HttpStatus.*;
 
 @RestController
-@RequestMapping("/wallet-servise")
+@RequestMapping("/wallet")
 public class WalletController {
-    private final String sharedKey = "SHARED_KEY";
 
-    private static final String SUCCESS_STATUS = "success";
-    private static final String ERROR_STATUS = "error";
-    private static final int CODE_SUCCESS = 200;
-    private static final int AUTH_FAILURE = 400;
+    private Logger logger = LoggerFactory.getLogger(WalletController.class);
+    private HttpStatus httpStatusResponse = OK;
+    private int responseTimeout;
 
-    @GetMapping
-    public BaseResponse showStatus() {
-        return new BaseResponse(SUCCESS_STATUS, 201);
+    @PostMapping("/setResponseCodeWithTimeout")
+    public String setResponseCodeWithTimeout(@RequestParam(value = "responseCode") int responseCode, @RequestParam(value = "timeout") int timeout){
+        httpStatusResponse = new HttpStatusMapping().getHttpStatus(responseCode);
+        responseTimeout = timeout;
+        logger.info("set httpStatusResponse: " + httpStatusResponse + "with timeout: " + timeout);
+        return "WalletResponseCode " + responseCode;
     }
 
-    @GetMapping("/hello")
-    ResponseEntity<String> hello() {
-        return new ResponseEntity<>("Hello World!", HttpStatus.BAD_REQUEST);
+    @PostMapping("/updateWallet")
+    public ResponseEntity<String> updateWalletRequest(@RequestParam(value = "appToken") String appToken,
+                                                      @RequestHeader HttpHeaders requestHeaders,
+                                                      @RequestBody String requestBody) throws InterruptedException {
+        return updateWalletResponse(appToken, requestHeaders, requestBody);
     }
 
-    @GetMapping("/badgateway")
-    public ResponseEntity testErrorStatus() {
-
-        //log.info("test log");
-        System.out.println("sss");
-        return new ResponseEntity(HttpStatus.BAD_GATEWAY);
-    }
-
-    @PostMapping("/pay")
-    public BaseResponse pay(@RequestParam(value = "key") String key, @RequestBody PaymentRequest request) {
-
-        final BaseResponse response;
-
-        if (sharedKey.equalsIgnoreCase(key)) {
-            int userId = request.getUserId();
-            String itemId = request.getItemId();
-            double discount = request.getDiscount();
-            // Process the request
-            // ....
-            // Return success response to the client.
-            response = new BaseResponse(SUCCESS_STATUS, CODE_SUCCESS);
-        } else {
-            response = new BaseResponse(ERROR_STATUS, AUTH_FAILURE);
+    public ResponseEntity<String> updateWalletResponse(String appToken, HttpHeaders requestHeaders, String requestBody) throws InterruptedException {
+        String updateWalletUrl = "http://wallet-service-01-test.dublin.local:3332/wallet/updateWallet?appToken={appToken}";
+        if(!httpStatusResponse.is2xxSuccessful()){
+            return new ResponseEntity(httpStatusResponse);
         }
-        return response;
+        HttpEntity<String> entity = new HttpEntity<String>(requestBody, requestHeaders);
+        RestTemplate restTemplate = new RestTemplate();
+        List<HttpMessageConverter<?>> converters = new ArrayList<>();
+        StringHttpMessageConverter stringConverter = new StringHttpMessageConverter();
+
+        stringConverter.setWriteAcceptCharset(false);
+        converters.add(stringConverter);
+        restTemplate.setMessageConverters(converters);
+
+        ResponseEntity<String> response = restTemplate.exchange(updateWalletUrl, HttpMethod.POST, entity, String.class, appToken);
+        logger.info(updateWalletUrl);
+        logger.info(response.getStatusCode().toString());
+        logger.info("Request body: " + requestBody);
+        logger.info("Response body: "+ response.getBody());
+        Thread.sleep(responseTimeout);
+        return new ResponseEntity<>(response.getBody(), HttpStatus.OK);
     }
 }
