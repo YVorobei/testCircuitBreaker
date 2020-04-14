@@ -22,6 +22,10 @@ public class WalletController {
         return new BaseResponse(SUCCESS_STATUS, 201);
     }
 
+    @GetMapping("/hello")
+    ResponseEntity<String> hello() {
+        return new ResponseEntity<>("Hello World!", HttpStatus.BAD_REQUEST);
+    }
 
     @GetMapping("/badgateway")
     public ResponseEntity testErrorStatus() {
