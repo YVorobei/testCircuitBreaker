@@ -1,4 +1,4 @@
-package services.walletService.controllers;
+package services.wallet;
 
 import org.springframework.http.converter.StringHttpMessageConverter;
 import org.springframework.http.converter.HttpMessageConverter;
@@ -7,19 +7,18 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.bind.annotation.*;
 import services.helper.HttpStatusMapping;
 import org.springframework.http.*;
+import lombok.extern.slf4j.Slf4j;
 import java.time.ZonedDateTime;
-import org.slf4j.LoggerFactory;
 import java.util.ArrayList;
-import org.slf4j.Logger;
 import java.util.List;
 
+@Slf4j
 @RestController
 @RequestMapping("/wallet")
 public class WalletController {
 
     private String updateWalletUrl = "http://wallet-service-01-test.dublin.local:3332/wallet/updateWallet?appToken={appToken}";
     private StringHttpMessageConverter stringConverter = new StringHttpMessageConverter();
-    private Logger logger = LoggerFactory.getLogger(WalletController.class);
     private List<HttpMessageConverter<?>> converters = new ArrayList<>();
     private RestTemplate restTemplate = new RestTemplate();
     private List<Long> errorTimerList = new ArrayList<>();
@@ -35,29 +34,29 @@ public class WalletController {
         responseTimeout = timeout;
         errorCounter = (resetErrorCounter) ? 0 : errorCounter;
         String logInfo = "Set httpStatusResponse: " + httpStatusResponse + "; with timeout: " + timeout;
-        logger.info(logInfo);
-
+        log.info(logInfo);
         return logInfo;
     }
 
     @GetMapping("/getCurrentErrorCounter")
     public String getCurrentErrorCounter(){
-        logger.info("Get currentErrorCounter");
+        log.info("Get currentErrorCounter: {}", errorCounter);
 
         return String.valueOf(errorCounter);
     }
 
     @GetMapping("/getErrorTimerList")
     public String getErrorTimerList(){
-        logger.info("Get errorTimerList");
+        String errorTimeList = errorTimerList.toString();
+        log.info("Get errorTimerList: {}", errorTimeList);
 
-        return errorTimerList.toString();
+        return errorTimeList;
     }
 
     @GetMapping("/resetErrorTimerList")
     public String resetErrorTimerList(){
         errorTimerList.clear();
-        logger.info("Reset errorTimerList");
+        log.info("Reset errorTimerList");
 
         return ("Reset errorTimerList: OK");
     }
@@ -79,11 +78,10 @@ public class WalletController {
         HttpEntity<String> entity = new HttpEntity<String>(requestBody, requestHeaders);
         setMessageConverters(restTemplate);
         ResponseEntity<String> response = restTemplate.exchange(updateWalletUrl, HttpMethod.POST, entity, String.class, appToken);
-
-        logger.info(updateWalletUrl);
-        logger.info(response.getStatusCode().toString());
-        logger.info("Request body: " + requestBody);
-        logger.info("Response body: "+ response.getBody());
+        log.info(updateWalletUrl);
+        log.info(response.getStatusCode().toString());
+        log.info("Request body: {}", requestBody);
+        log.info("Response body: {}", response.getBody());
         Thread.sleep(responseTimeout);
 
         return new ResponseEntity<>(response.getBody(), HttpStatus.OK);
